@@ -5,11 +5,12 @@ library(readxl)
 library(openxlsx)
 setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - General/Temperature indicative taxa")
 
+#################### importing biodiversity data
 point_data <- read_excel("data/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "point_contact_summary_data")
 quadrat_data <- read_excel("data/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "quadrat_summary_data")
 swath_data <- read_excel("data/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "swath_summary_data")
 
-#################### collecting how many years of data each site has
+#################### collecting how many years of biodiversity data each site has
 yr_pt_data <- point_data %>% select(marine_site_name, year, latitude, longitude) %>% distinct
 yr_qdrt_data <- quadrat_data %>% select(marine_site_name, year, latitude, longitude) %>% distinct
 yr_swth_data <- swath_data %>% select(marine_site_name, year, latitude, longitude) %>% distinct
@@ -26,7 +27,7 @@ summary_tbl <- all_years %>%
 
 write.csv(summary_tbl, "R outputs/years_stations_summary_coords.csv", row.names = F)
 
-#################### creating a species list by collection method
+#################### creating a species list by collection method (biodiversity data)
 species_pt <- point_data %>% 
   filter(number_of_hits > 0) %>% 
   select(species_lump) %>% 
