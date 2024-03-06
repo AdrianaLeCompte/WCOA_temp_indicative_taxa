@@ -66,5 +66,12 @@ write.csv(phot_tran_species, "C:/Users/adrianal/SCCWRP/Ocean Health Report Cards
 
 phot_tran_years <- photoplots_transects_data %>% 
   filter(average_percent_cover > 0) %>% 
-  select(marine_site_name, marine_common_year) %>% distinct
+  select(marine_site_name, marine_common_year) %>% 
+  distinct %>% 
+  group_by(marine_site_name) %>% 
+  mutate(min_yr = min(marine_common_year)) %>% 
+  mutate(max_yr = max(marine_common_year)) %>% 
+  mutate(total_yrs = length(marine_common_year)) %>% 
+  select(-marine_common_year) %>% 
+  distinct
   
