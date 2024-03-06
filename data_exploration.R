@@ -3,6 +3,7 @@ library(dplyr)
 library(lubridate)
 library(readxl)
 library(openxlsx)
+library(readr)
 setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - General/Temperature indicative taxa")
 
 #################### importing biodiversity data
@@ -49,3 +50,21 @@ species_swth <- swath_data %>%
 write.csv(species_pt, "R outputs/species_list_point.csv", row.names = F)
 write.csv(species_qdrt, "R outputs/species_list_quadrat.csv", row.names = F)
 write.csv(species_swth, "R outputs/species_list_swath.csv", row.names = F)
+
+#################### importing long term monitoring data
+species_code_key <- read_csv("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/raw data (MARINe)/long term monitoring/marine_lumping_codes_definitions.csv")
+
+photoplots_transects_data <- read_csv("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/raw data (MARINe)/long term monitoring/phototransummarysd_download.csv")
+
+phot_tran_species <- photoplots_transects_data %>% 
+  filter(average_percent_cover > 0) %>% 
+  rename(lumping_code = species_code) %>% 
+  select(lumping_code) %>% distinct %>% 
+  left_join(species_code_key)
+
+write.csv(phot_tran_species, "C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/R outputs/species_list_longtermdata.csv", row.names = F)
+
+phot_tran_years <- photoplots_transects_data %>% 
+  filter(average_percent_cover > 0) %>% 
+  select(marine_site_name, marine_common_year) %>% distinct
+  
