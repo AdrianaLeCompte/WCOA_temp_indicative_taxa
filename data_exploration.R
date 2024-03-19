@@ -4,12 +4,12 @@ library(lubridate)
 library(readxl)
 library(openxlsx)
 library(readr)
-setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - General/Temperature indicative taxa")
+setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa")
 
 #################### importing biodiversity data
-point_data <- read_excel("data/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "point_contact_summary_data")
-quadrat_data <- read_excel("data/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "quadrat_summary_data")
-swath_data <- read_excel("data/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "swath_summary_data")
+point_data <- read_excel("raw data (MARINe)/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "point_contact_summary_data")
+quadrat_data <- read_excel("raw data (MARINe)/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "quadrat_summary_data")
+swath_data <- read_excel("raw data (MARINe)/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "swath_summary_data")
 
 #################### collecting how many years of biodiversity data each site has
 yr_pt_data <- point_data %>% select(marine_site_name, year, latitude, longitude) %>% distinct
@@ -52,9 +52,9 @@ write.csv(species_qdrt, "R outputs/species_list_quadrat.csv", row.names = F)
 write.csv(species_swth, "R outputs/species_list_swath.csv", row.names = F)
 
 #################### importing long term monitoring data
-species_code_key <- read_csv("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/raw data (MARINe)/long term monitoring/marine_lumping_codes_definitions.csv")
+species_code_key <- read_csv("raw data (MARINe)/long term monitoring/marine_lumping_codes_definitions.csv")
 
-photoplots_transects_data <- read_csv("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/raw data (MARINe)/long term monitoring/phototransummarysd_download.csv")
+photoplots_transects_data <- read_csv("raw data (MARINe)/long term monitoring/phototransummarysd_download.csv")
 
 phot_tran_species <- photoplots_transects_data %>% 
   filter(average_percent_cover > 0) %>% 
@@ -62,7 +62,7 @@ phot_tran_species <- photoplots_transects_data %>%
   select(lumping_code) %>% distinct %>% 
   left_join(species_code_key)
 
-write.csv(phot_tran_species, "C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/R outputs/species_list_longtermdata.csv", row.names = F)
+write.csv(phot_tran_species, "R outputs/species_list_longtermdata.csv", row.names = F)
 
 phot_tran_years <- photoplots_transects_data %>% 
   filter(average_percent_cover > 0) %>% 
