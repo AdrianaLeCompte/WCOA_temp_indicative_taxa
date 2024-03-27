@@ -4,7 +4,9 @@ library(lubridate)
 library(readxl)
 library(openxlsx)
 library(readr)
-setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - General/Temperature indicative taxa")
+# setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - General/Temperature indicative taxa") #laptop wd
+ setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa") #desktop wd
+
 
 #################### importing biodiversity data
 point_data <- read_excel("raw data (MARINe)/biodiversity/adriana_lecompte_santiago_cbs_data_20240227.xlsx", sheet = "point_contact_summary_data")
@@ -17,6 +19,7 @@ quad.dat.clean <- quadrat_data %>%
   filter(density_per_m2 > 0)
 
 quad.dat.summ <- quad.dat.clean %>% #all taxa abundances by year and location
+  mutate(species_lump = str_replace(species_lump, "Cucumaria/Pseudocnus spp", "Pseudocnus spp")) %>% 
   group_by(species_lump, year) %>%
   mutate(sum_dens=sum(density_per_m2)) %>%  #calculate total abundance in given year for each taxon across all sites
   ungroup() %>% 
@@ -44,6 +47,8 @@ max.lat.shifts <- quad.dat.summ %>%
   arrange(desc(shift)) %>% #calculating the range of shift
   ungroup()
 
+# write.csv(max.lat.shifts, "R outputs/max_latitude_shifts.csv", row.names = F)
+
 all.infauna.lat.plots <- quad.dat.summ %>% 
   filter(frequency >=5) %>% #removing taxa that were observed less than 10 times
   nest(dat=c(-species_lump, -time_span)) %>% #nesting data by unit of analysis - e.g., taxon and depth zone
@@ -62,11 +67,10 @@ migration_df <- all.infauna.lat.plots %>%
   filter(p.value<=0.1) %>% #selecting only "significant" taxa,i.e. those that showed statistically significant migration across the dataset
   mutate(direction=if_else(Year_est>0, "Northward","Southward")) #characterizing the nature of the migration
 
+# write.csv(migration_df, "R outputs/migration_data.csv", row.names = F)
+
 #################### pt 3 plot data
 species_list<-unique(migration_df$species_lump) #vector of species names to feed to the function
-
-xxx <- "Lottia pelta"
-dat <- quad.dat.summ
 
 quad.dat.summ.v2 <- quad.dat.clean %>% #all taxa abundances by year and location
   group_by(species_lump, year) %>%
@@ -77,7 +81,7 @@ quad.dat.summ.v2 <- quad.dat.clean %>% #all taxa abundances by year and location
 plot_species<-function(xxx, dat) {
   
   dat.tax<-dat %>% inner_join(.,migration_df, by=c("species_lump")) %>% #filtering for the north-south taxa
-    filter(species_lump==xxx)#selecting an individual taxon for graphing
+    filter(species_lump==xxx) #selecting an individual taxon for graphing
   
   plot.taxa<-ggplot(dat.tax, aes(x=year, y=x_wtlat))+ 
     theme_bw()+theme(panel.grid = element_blank(),
@@ -90,10 +94,11 @@ plot_species<-function(xxx, dat) {
     labs(x="year", y="Abundance Weighted Latitude")+ 
     facet_wrap("direction", nrow=2, ncol=5)
   print(plot.taxa)
+  
+  ggsave(paste("R outputs/plots/", xxx, " quadrat_mean_weighted_lat.tiff",sep=""),
+          plot.taxa, dpi=150, width=16, height=10, units="cm")
+  
 }
 
 hummus.2<-map(species_list, ~plot_species(.x,quad.dat.summ)) #iterating the function across the different north/south species
-
-# ggsave(paste("R outputs/plots", xxx, " mean weighted lat-year-2.tiff",sep=""),
-#        plot.tax, dpi=150, width=16, height=10, units="cm")
 
