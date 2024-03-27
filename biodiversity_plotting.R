@@ -70,7 +70,7 @@ max.lat.shifts.qdrt <- quad.dat.summ %>%
             min_lat_all=min(x_lat)) %>% 
   arrange(desc(shift)) %>% #calculating the range of shift
   ungroup()
-  #write.csv(max.lat.shifts, "R outputs/max_latitude_shifts.csv", row.names = F)
+  # write.csv(max.lat.shifts.qdrt, "R outputs/max_latitude_shifts_quadrat.csv", row.names = F)
 
 lm.infauna.qdrt <- quad.dat.summ %>% 
   filter(frequency >=5) %>% #removing taxa that were observed less than 10 times
@@ -89,7 +89,7 @@ migration.df.qdrt <- lm.infauna.qdrt %>%
   rename(Year_est=estimate) %>% select(-term) %>% #renaming slope value to be "Year_est"
   filter(p.value<=0.1) %>% #selecting only "significant" taxa,i.e. those that showed statistically significant migration across the dataset
   mutate(direction=if_else(Year_est>0, "Northward","Southward")) #characterizing the nature of the migration
-  #write.csv(migration_df, "R outputs/migration_data.csv", row.names = F)
+  # write.csv(migration.df.qdrt, "R outputs/migration_data_quadrat.csv", row.names = F)
 
 ########## swath data
 max.lat.shifts.swth <- swat.dat.summ %>% 
@@ -100,7 +100,7 @@ max.lat.shifts.swth <- swat.dat.summ %>%
             min_lat_all=min(x_lat)) %>% 
   arrange(desc(shift)) %>% #calculating the range of shift
   ungroup()
-#write.csv(max.lat.shifts, "R outputs/max_latitude_shifts.csv", row.names = F)
+  # write.csv(max.lat.shifts.swth, "R outputs/max_latitude_shifts_swath.csv", row.names = F)
 
 lm.infauna.swth <- swat.dat.summ %>% 
   filter(frequency >=5) %>% #removing taxa that were observed less than 10 times
@@ -119,7 +119,7 @@ migration.df.swth <- lm.infauna.swth %>%
   rename(Year_est=estimate) %>% select(-term) %>% #renaming slope value to be "Year_est"
   filter(p.value<=0.1) %>% #selecting only "significant" taxa,i.e. those that showed statistically significant migration across the dataset
   mutate(direction=if_else(Year_est>0, "Northward","Southward")) #characterizing the nature of the migration
-#write.csv(migration_df, "R outputs/migration_data.csv", row.names = F)
+  # write.csv(migration.df.swth, "R outputs/migration_data_swath.csv", row.names = F)
 
 
 #################### pt 3 plot data ################################################################################
