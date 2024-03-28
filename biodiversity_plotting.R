@@ -63,7 +63,7 @@ swat.dat.summ <- swat.dat.clean %>% #all taxa abundances by year and location
 #################### pt 2 run linear model, clean up results ########################################################
 ########## quadrat data
 max.lat.shifts.qdrt <- quad.dat.summ %>% 
-  left_join(select(migration.df.drt, species_lump, direction),., by=c("species_lump"))%>% #filtering for only the significant taxa
+  left_join(select(migration.df.qdrt, species_lump, direction),., by=c("species_lump"))%>% #filtering for only the significant taxa
   group_by(species_lump, direction) %>% 
   summarise(shift=(max(x_lat)-min(x_lat)),
             max_lat_all=max(x_lat),
@@ -141,7 +141,7 @@ plot_species_qdrt<-function(xxx, dat) {
     theme_bw()+theme(panel.grid = element_blank(),
                      axis.text.y=element_text(face=c("bold", "plain","bold", "bold","plain", "bold","plain", "plain")),#bolding specific points on the y-axis that correspond to the scale y continuous
                      strip.background = element_blank(), strip.text = element_text(face="bold"))+
-    geom_point(data = quad.dat.summ.v2, aes(x=year, y=wt_lat), size=1, shape=21, alpha=0.75, fill="grey")+ 
+    geom_point(data = (filter(quad.dat.summ.v2, species_lump == xxx)), aes(x=year, y=latitude), size=1, shape=21, alpha=0.75, fill="grey")+ 
     geom_smooth(method = "lm", show.legend = FALSE, se=F)+
     geom_point(size=2, shape=21, alpha=0.75, fill="red")+
     ggtitle(xxx)+
@@ -149,9 +149,9 @@ plot_species_qdrt<-function(xxx, dat) {
     facet_wrap("direction", nrow=2, ncol=5)
   print(plot.taxa)
   
-  ggsave(paste("R outputs/plots/", xxx, " quadrat_mean_weighted_lat.tiff",sep=""),
-          plot.taxa, dpi=150, width=16, height=10, units="cm")
-  
+  # ggsave(paste("R outputs/plots/", xxx, " quadrat_mean_weighted_lat.tiff",sep=""),
+  #         plot.taxa, dpi=150, width=16, height=10, units="cm")
+  # 
 }
 
 hummus.2<-map(species_list, ~plot_species_qdrt(.x,quad.dat.summ)) #iterating the function across the different north/south species
@@ -182,9 +182,9 @@ plot_species_swth<-function(xxx, dat) {
     facet_wrap("direction", nrow=2, ncol=5)
   print(plot.taxa)
   
-  ggsave(paste("R outputs/plots/", xxx, " swath_mean_weighted_lat.tiff",sep=""),
-         plot.taxa, dpi=150, width=16, height=10, units="cm")
-  
+  # ggsave(paste("R outputs/plots/", xxx, " swath_mean_weighted_lat.tiff",sep=""),
+  #        plot.taxa, dpi=150, width=16, height=10, units="cm")
+  # 
 }
 
 hummus.2<-map(species_list.swth, ~plot_species_swth(.x,swat.dat.summ)) #iterating the function across the different north/south species
