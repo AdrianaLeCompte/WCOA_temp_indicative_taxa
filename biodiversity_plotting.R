@@ -62,16 +62,6 @@ swat.dat.summ <- swat.dat.clean %>% #all taxa abundances by year and location
 
 #################### pt 2 run linear model, clean up results ########################################################
 ########## quadrat data
-max.lat.shifts.qdrt <- quad.dat.summ %>% 
-  left_join(select(migration.df.qdrt, species_lump, direction),., by=c("species_lump"))%>% #filtering for only the significant taxa
-  group_by(species_lump, direction) %>% 
-  summarise(shift=(max(x_lat)-min(x_lat)),
-            max_lat_all=max(x_lat),
-            min_lat_all=min(x_lat)) %>% 
-  arrange(desc(shift)) %>% #calculating the range of shift
-  ungroup()
-  # write.csv(max.lat.shifts.qdrt, "R outputs/max_latitude_shifts_quadrat.csv", row.names = F)
-
 lm.infauna.qdrt <- quad.dat.summ %>% 
   filter(frequency >=5) %>% #removing taxa that were observed less than 10 times
   nest(dat=c(-species_lump, -time_span)) %>% #nesting data by unit of analysis - e.g., taxon and depth zone
@@ -90,6 +80,16 @@ migration.df.qdrt <- lm.infauna.qdrt %>%
   filter(p.value<=0.1) %>% #selecting only "significant" taxa,i.e. those that showed statistically significant migration across the dataset
   mutate(direction=if_else(Year_est>0, "Northward","Southward")) #characterizing the nature of the migration
   # write.csv(migration.df.qdrt, "R outputs/migration_data_quadrat.csv", row.names = F)
+
+max.lat.shifts.qdrt <- quad.dat.summ %>% 
+  left_join(select(migration.df.qdrt, species_lump, direction),., by=c("species_lump"))%>% #filtering for only the significant taxa
+  group_by(species_lump, direction) %>% 
+  summarise(shift=(max(x_lat)-min(x_lat)),
+            max_lat_all=max(x_lat),
+            min_lat_all=min(x_lat)) %>% 
+  arrange(desc(shift)) %>% #calculating the range of shift
+  ungroup()
+# write.csv(max.lat.shifts.qdrt, "R outputs/max_latitude_shifts_quadrat.csv", row.names = F)
 
 ########## swath data
 max.lat.shifts.swth <- swat.dat.summ %>% 
