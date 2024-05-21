@@ -85,3 +85,14 @@ shift.df <- lm.df %>%
 # write.csv(migration.df.qdrt, "R outputs/migration_data_quadrat.csv", row.names = F)
 
 
+
+# thermal tolerance -------------------------------------------------------
+GlobalTherm <- read_excel("raw data (MARINe)/globaltherm/GlobalTherm_upload_10_11_17.xlsx")
+
+GlobalTherm.cln <-  GlobalTherm %>%
+  mutate(species_lump = paste(Genus,Species)) %>% 
+  select(species_lump, Tmax, tmin)
+
+therm.check <- left_join(all.bio.1, GlobalTherm.cln, by = "species_lump") %>% 
+  select(-year) %>% distinct() %>% na.omit() # purple shore crab is the only species listed in this db
+
