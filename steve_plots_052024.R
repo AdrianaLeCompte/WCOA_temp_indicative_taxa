@@ -96,3 +96,17 @@ GlobalTherm.cln <-  GlobalTherm %>%
 therm.check <- left_join(all.bio.1, GlobalTherm.cln, by = "species_lump") %>% 
   select(-year) %>% distinct() %>% na.omit() # purple shore crab is the only species listed in this db
 
+
+# sites years -------------------------------------------------------------
+
+bio.visit.yrs <- read_excel("raw data (MARINe)/biodiversity/biodiversity_visit_yrs.xlsx") %>% 
+  count(year, sort = T)
+
+plot.3 <-ggplot(data = bio.visit.yrs, aes(x = year, y = n))+
+  geom_col()+ 
+  theme_bw()+
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank())+
+  labs(x="year", y="count")
+print(plot.3)
+
