@@ -4,6 +4,8 @@ library(lubridate)
 library(readxl)
 library(openxlsx)
 library(readr)
+library(vegan)
+library(ggrepel)
 #setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - General/Temperature indicative taxa") #laptop wd
 setwd("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa") #desktop wd
 
@@ -47,6 +49,12 @@ swat.dat.clean <- swath_data %>%
   filter(density_per_m2 > 0)
 
 all.bio <- bind_rows(quad.dat.clean, swat.dat.clean) #133 unique species in df
+
+all.bio.col <- bind_rows(quadrat_data, swath_data) %>% 
+  filter(density_per_m2 > 0)
+
+latitudes <- all.bio.col %>% select(marine_site_name, latitude, longitude) %>% distinct()
+write.csv(latitudes, "raw data (MARINe)/site_latitudes.csv", row.names = F)
 
 phto.data <- photoplots_data %>%
   left_join(species_code_key, by= c("species_code" = "lumping_code")) %>%
@@ -244,4 +252,59 @@ plot_4_fnctn <- function(list, data){
 }
                
 pencil <- map(list.1, ~plot_4_fnctn(.x,quad.dat.lat))
+
+
+# ordination -------------------------------------------------------------
+codes <- read_excel("raw data (MARINe)/sitename_codes.xlsx")
+regions <- read_excel("raw data (MARINe)/site_regions.xls")
+
+codes_reg <- left_join(codes, regions, by = 'marine_site_name') %>% select(-OBJECTID)
+
+benthic_df_pa <- benthic_df %>% 
+  group_by(SampleID, FinalID) %>% 
+  summarize(BAResult_sum = sum(BAResult)) %>% 
+  ungroup() %>% 
+  mutate(p_a = 1) %>%
+  select(-BAResult_sum) %>% 
+  pivot_wider(names_from = FinalID, values_from = p_a, values_fill = 0) %>% 
+  column_to_rownames("SampleID")
+
+m1 <- all.bio %>% 
+  left_join(codes, by = "marine_site_name") %>% 
+  mutate(SampleID = paste(sitecode, year, sep = "_")) %>% 
+  filter(density_per_m2 > 0) %>% 
+  group_by(SampleID, species_lump) %>% 
+  summarize(density_sum = sum(density_per_m2)) %>% 
+  ungroup() %>% 
+  mutate(p_a = 1) %>%
+  select(-density_sum) %>% 
+  pivot_wider(names_from = species_lump, values_from = p_a, values_fill = 0) %>% 
+  column_to_rownames("SampleID")
+
+m1.ord <- metaMDS(m1, k = 2, try = 1000, trymax = 10000, autotransform = F)
+m1.stress = m1.ord$stress
+## stress from ordination run with density per m2 values = 4.909649e-05
+## stress from ordination run with presence absence values = 4.435782e-05
+
+m1.scores <- data.frame(scores(m1.ord, display = "sites")) %>% 
+  rownames_to_column("SampleID") %>% 
+  mutate(stationcode = str_sub(SampleID,1,3), sam_year = str_sub(SampleID,5,8)) %>% 
+  select(-SampleID) %>% 
+  filter(stationcode != "PUL") %>% 
+  left_join(codes_reg, by = c("stationcode" = "sitecode")) %>% 
+  mutate(yr_cond = str_sub(sam_year,3,4))
+
+m1.ord.plot <- m1.scores %>% 
+  ggplot(., aes(x = NMDS1, y = NMDS2)) +
+  theme_bw()+ theme(panel.grid = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
+                    axis.title = element_text(face = "bold"))+
+  geom_text(aes(label = yr_cond, color = region, fontface = "bold"), pch = 21, size = 3.5)+
+  scale_fill_discrete(name = "region")+
+  scale_colour_manual(values= c("#999999", "#CC79A7", "#0072B2", "#009E73"))+
+  labs(title = 'Biodiversity data, all sites all years',
+        subtitle = 'presence absence')
+m1.ord.plot
+
+
+
 
