@@ -39,7 +39,7 @@ int.3 <- intersect(phto.sp.list, swat.sp.list) # only Pisaster ochraceus in both
 test <- swath_data %>% #swath data has "survey rep" which seems to have multiple occurrence of species per year/site
   filter(species_lump == "Pisaster ochraceus", year == "2015", marine_site_name == "Alegria")
 
-# clean data --------------------------------------------------------------
+# cleaning data --------------------------------------------------------------
 quad.dat.clean <- quadrat_data %>% 
   select(species_lump, year, marine_site_name, latitude, density_per_m2) %>% 
   filter(density_per_m2 > 0)
@@ -52,6 +52,10 @@ all.bio <- bind_rows(quad.dat.clean, swat.dat.clean) #133 unique species in df
 
 all.bio.col <- bind_rows(quadrat_data, swath_data) %>% 
   filter(density_per_m2 > 0)
+
+final.cln <- all.bio.cln %>% 
+  group_by(species_lump, year, marine_site_name, latitude) %>% 
+  summarise(max_density = max(density_per_m2))
 
 latitudes <- all.bio.col %>% select(marine_site_name, latitude, longitude) %>% distinct()
 write.csv(latitudes, "raw data (MARINe)/site_latitudes.csv", row.names = F)
@@ -126,8 +130,8 @@ summ.df <- all.bio %>% #133 unique species in df
          time_span=(max(year)-min(year))) %>% 
   ungroup()
 
-lm.df <- summ.df %>% #100 unique species in df
-  filter(frequency >=5) %>% 
+lm.df <- summ.df %>% # 133 unique species in summ.df
+  filter(frequency >=5) %>% # 100 unique species seen > 5 times
   nest(dat=c(-species_lump, -time_span)) %>% 
   mutate(modz=map(dat, ~lm(x_wtlat~year, data=.x)), 
          mod_sum=map(modz, broom::tidy), 
@@ -145,6 +149,8 @@ shift.df <- lm.df %>%
 # write.csv(migration.df.qdrt, "R outputs/migration_data_quadrat.csv", row.names = F)
 
 
+shift.middle <- shift.df %>% 
+  filter(Year_est > -0.02 & Year_est < 0.02)
 
 # thermal tolerance -------------------------------------------------------
 GlobalTherm <- read_excel("raw data (MARINe)/globaltherm/GlobalTherm_upload_10_11_17.xlsx")
@@ -188,6 +194,10 @@ all.bio.cln <- all.bio %>%
                                "Pugettia gracilis/richii" = "Pugettia gracilis",
                                "Tegula funebralis/gallina" = "Tegula funebralis",
                                "Lottia paradigitalis/strigatella" = "Lottia paradigitalis")) %>% 
+  filter(density_per_m2>0)
+
+
+all.bio.cln.2 <- all.bio.cln %>% 
   group_by(species_lump, year) %>% 
   summarise(sites=n()) %>%  
   filter(n()>4) %>% 
@@ -222,11 +232,11 @@ plot_3_fnctn <- function(xxx, dat){
   ggsave(file= paste("C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/R outputs/plots/species plots/",xxx,"plot.tiff", sep="_"), dpi=150, y1)
 }
 
-candle <- map(sp.list.2, ~plot_3_fnctn(.x,all.bio.cln))
+candle <- map(sp.list.2, ~plot_3_fnctn(.x,all.bio.cln.2))
 
 # plot 4 - range extensions -----------------------------------------------
 
-all.bio.lat <- all.bio %>% select(-density_per_m2) %>% distinct()
+all.bio.lat <- all.bio.cln %>% select(-density_per_m2) %>% distinct()
 phto.data.lat <- phto.data %>% select(-average_percent_cover) %>% distinct()
 
 quad.dat.lat <- quad.dat.summ %>% select(species_lump, year, max_lat, min_lat, x_wtlat) %>% 
@@ -269,7 +279,7 @@ benthic_df_pa <- benthic_df %>%
   pivot_wider(names_from = FinalID, values_from = p_a, values_fill = 0) %>% 
   column_to_rownames("SampleID")
 
-m1 <- all.bio %>% 
+m1 <- all.bio.cln %>% 
   left_join(codes, by = "marine_site_name") %>% 
   mutate(SampleID = paste(sitecode, year, sep = "_")) %>% 
   filter(density_per_m2 > 0) %>% 
@@ -281,7 +291,7 @@ m1 <- all.bio %>%
   pivot_wider(names_from = species_lump, values_from = p_a, values_fill = 0) %>% 
   column_to_rownames("SampleID")
 
-m1.ord <- metaMDS(m1, k = 2, try = 1000, trymax = 10000, autotransform = F)
+m1.ord <- metaMDS(m1, k = 3, try = 1000, trymax = 10000, autotransform = F)
 m1.stress = m1.ord$stress
 ## stress from ordination run with density per m2 values = 4.909649e-05
 ## stress from ordination run with presence absence values = 4.435782e-05
@@ -305,6 +315,111 @@ m1.ord.plot <- m1.scores %>%
         subtitle = 'presence absence')
 m1.ord.plot
 
+ggsave(paste("R outputs/plots/m1.ordination.tiff",sep=""), m1.ord.plot, dpi=150, width=16, height=10, units="cm")
 
 
+
+
+# latitude exceedance ----------------------------------------------------
+
+all.bio.g5 <- final.cln %>% ## all bio data observed greater than 5 times
+  select(species_lump, year, latitude) %>% 
+  group_by(species_lump) %>% 
+  mutate(frequency = length(species_lump)) %>% 
+  filter(frequency > 5) %>% 
+  ungroup() %>% 
+  select(-frequency) %>% 
+  mutate(blob = case_when(year < 2013 ~ "pre_blob",
+                   year >= 2013 ~ "post_blob"))
+
+pre.blob <- all.bio.g5 %>% 
+  group_by(species_lump, blob) %>% 
+  summarize(max_lat=max(latitude), 
+            min_lat=min(latitude)) %>% 
+  ungroup() %>% 
+  filter(blob == "pre_blob")
+
+post.blob <- all.bio.g5 %>% 
+  filter(blob=="post_blob") %>% 
+  select(-blob) %>% 
+  group_by(species_lump, year) %>% 
+  summarise(max_lat_yr = max(latitude),
+            min_lat_yr = min(latitude))
+
+total.occ <- all.bio.g5 %>% 
+  filter(blob=="post_blob") %>%
+  distinct(species_lump, year) %>% 
+  group_by(species_lump) %>% 
+  summarise(tot_occ = length(year))
+  
+df1 <- left_join(post.blob, pre.blob, by = "species_lump") %>% 
+  group_by(species_lump) %>% 
+  filter(max_lat_yr > max_lat) %>% 
+  ungroup() %>% 
+  group_by(species_lump) %>% 
+  summarise(num_occ = n()) %>% 
+  ungroup() %>% 
+  group_by(num_occ) %>% 
+  summarise(num_sp = n())
+
+write.csv(df1, "R outputs/species_maxlatitude_exceedances.csv", row.names = F)
+
+df2 <- left_join(post.blob, pre.blob, by = "species_lump") %>% 
+  group_by(species_lump) %>% 
+  filter(min_lat_yr < min_lat) %>% 
+  ungroup() %>% 
+  group_by(species_lump) %>% 
+  summarise(num_occ = n()) %>% 
+  ungroup() %>% 
+  group_by(num_occ) %>% 
+  summarise(num_sp = n())
+
+write.csv(df2, "R outputs/species_minlatitude_exceedances.csv", row.names = F)
+
+df1.rel <- left_join(post.blob, pre.blob, by = "species_lump") %>% 
+  left_join(., total.occ, by = "species_lump") %>% 
+  mutate(exceed = ifelse(
+    max_lat_yr > max_lat, 1, 0
+  )) %>% 
+  group_by(species_lump, tot_occ) %>% 
+  summarise(tot_exc = sum(exceed)) %>% 
+  drop_na() %>% 
+  ungroup() %>% 
+  mutate(rel_exc = (tot_exc/tot_occ))
+
+plot.rel <- df1.rel %>% 
+  filter(tot_occ > 2) %>% 
+  ggplot(., aes(x = rel_exc))+
+  geom_histogram()
+plot.rel
+
+plot.blob.max <- df1 %>% 
+  ggplot(., aes(x=num_occ, y=num_sp)) +
+  geom_col()+
+  theme_bw()+
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank())+
+  scale_x_continuous(breaks=seq(1,8,by=1))+
+  labs(x="number of observations", y="number of species",
+       title="Species exceeding their historical max latitude",
+       subtitle="from 2013 to 2023")
+plot.blob.max
+
+ggsave(paste("R outputs/plots/species_maxlat_postblob.tiff"),
+         plot.blob.max, dpi=150, width=17, height=13, units="cm")
+
+plot.blob.min <- df2 %>% 
+  ggplot(., aes(x=num_occ, y=num_sp)) +
+  geom_col()+
+  theme_bw()+
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank())+
+  scale_x_continuous(breaks=seq(1,8,by=1))+
+  labs(x="number of observations", y="number of species",
+       title="Species exceeding their historical min latitude",
+       subtitle="from 2013 to 2023")
+plot.blob.min
+
+ggsave(paste("R outputs/plots/species_minlat_postblob.tiff"),
+       plot.blob.min, dpi=150, width=17, height=13, units="cm")
 
