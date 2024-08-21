@@ -124,9 +124,13 @@ sites = "Alcatraz"
 run.1 <- function(sites, data){
 
   seasonal.boxplot <- data %>% 
+    group_by(metric, yr, season) %>%
+    mutate(temp_mean = mean(temp_value)) %>% 
+    ungroup() %>% 
     filter(site == sites) %>% 
     ggplot()+
     geom_boxplot(aes(y=temp_value, x=yr))+
+    geom_point(aes(y=temp_mean, x=yr, color="#d73027"), show.legend = FALSE)+
     xlab("year") + ylab("temp deg C")+
     facet_grid(metric.2 ~ season)+
     theme_bw()+
@@ -153,7 +157,8 @@ run.1 <- function(sites, data){
     theme_bw()+
     theme(panel.grid = element_blank(),
           strip.background = element_blank(),
-          axis.text.x = element_text(size = 5))+
+          axis.text.x = element_text(size = 7))+
+    scale_x_discrete(breaks=c("00","03","06","09","12","15","18","21"))+
   labs(title = paste(sites),
        subtitle = data$region)
   annual.boxplot
