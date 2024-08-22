@@ -55,7 +55,8 @@ all.bio.col <- bind_rows(quadrat_data, swath_data) %>%
 
 final.cln <- all.bio.cln %>% 
   group_by(species_lump, year, marine_site_name, latitude) %>% 
-  summarise(max_density = max(density_per_m2))
+  summarise(max_density = max(density_per_m2)) %>% 
+  ungroup()
 
 latitudes <- all.bio.col %>% select(marine_site_name, latitude, longitude) %>% distinct()
 write.csv(latitudes, "raw data (MARINe)/site_latitudes.csv", row.names = F)
@@ -111,8 +112,7 @@ print(plot.1.1)
 # ggsave(paste("R outputs/plots/plot_1.1.tiff"), plot.1.1, dpi=150, width=16, height=10, units="cm")
 
 # shift direction  ------------------------------------------------------------------
-summ.df <- all.bio %>% #133 unique species in df
-  mutate(species_lump = str_replace(species_lump, "Cucumaria/Pseudocnus spp", "Pseudocnus spp")) %>% 
+summ.df <- all.bio.cln %>% #133 unique species in beginning df
   group_by(species_lump, year) %>%
   mutate(sum_dens=sum(density_per_m2)) %>%  
   ungroup() %>% 
@@ -128,10 +128,10 @@ summ.df <- all.bio %>% #133 unique species in df
   group_by(species_lump) %>% 
   mutate(frequency = length(year),
          time_span=(max(year)-min(year))) %>% 
-  ungroup()
+  ungroup() %>% 
+  filter(frequency >=5) # 100 unique species seen > 5 times
 
-lm.df <- summ.df %>% # 133 unique species in summ.df
-  filter(frequency >=5) %>% # 100 unique species seen > 5 times
+lm.df <- summ.df %>% 
   nest(dat=c(-species_lump, -time_span)) %>% 
   mutate(modz=map(dat, ~lm(x_wtlat~year, data=.x)), 
          mod_sum=map(modz, broom::tidy), 
@@ -236,15 +236,16 @@ candle <- map(sp.list.2, ~plot_3_fnctn(.x,all.bio.cln.2))
 
 # plot 4 - range extensions -----------------------------------------------
 
-all.bio.lat <- all.bio.cln %>% select(-density_per_m2) %>% distinct()
+all.bio.lat <- final.cln %>% select(-max_density) %>% distinct()
 phto.data.lat <- phto.data %>% select(-average_percent_cover) %>% distinct()
 
-quad.dat.lat <- quad.dat.summ %>% select(species_lump, year, max_lat, min_lat, x_wtlat) %>% 
+quad.dat.lat <- quad.dat.summ %>% 
+  select(species_lump, year, max_lat, min_lat, x_wtlat) %>% 
   pivot_longer(cols = max_lat:x_wtlat,
                names_to = "latitude_type",
                values_to = "latitude")
 
-list.1 <- unique(quad.dat.lat$species_lump)
+list.1 <- unique(final.cln$species_lump)
 
 plot_4_fnctn <- function(list, data){
   w1 <- data %>% 
@@ -316,7 +317,6 @@ m1.ord.plot <- m1.scores %>%
 m1.ord.plot
 
 ggsave(paste("R outputs/plots/m1.ordination.tiff",sep=""), m1.ord.plot, dpi=150, width=16, height=10, units="cm")
-
 
 
 
