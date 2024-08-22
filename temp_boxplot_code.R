@@ -123,11 +123,11 @@ sites = "Alcatraz"
 
 run.1 <- function(sites, data){
 
-  seasonal.boxplot <- data %>% 
+  seasonal.boxplot <- data %>%
+    filter(site == sites) %>% 
     group_by(metric, yr, season) %>%
     mutate(temp_mean = mean(temp_value)) %>% 
     ungroup() %>% 
-    filter(site == sites) %>% 
     ggplot()+
     geom_boxplot(aes(y=temp_value, x=yr))+
     geom_point(aes(y=temp_mean, x=yr, color="#d73027"), show.legend = FALSE)+
@@ -144,11 +144,11 @@ run.1 <- function(sites, data){
   ggsave(file = paste(output_path, "/", sites, "_seasonal_boxplot.tiff", sep = ""), 
          dpi = 150, seasonal.boxplot)
   
-  annual.boxplot <- data %>% 
+  annual.boxplot <- data %>%
+    filter(site == sites) %>%
     group_by(metric, yr) %>%
     mutate(temp_mean = mean(temp_value)) %>% 
     ungroup() %>% 
-    filter(site == sites) %>%
     ggplot()+
     geom_boxplot(aes(y=temp_value, x=yr))+
     geom_point(aes(y=temp_mean, x=yr, color="#d73027"), show.legend = FALSE)+
@@ -166,10 +166,10 @@ run.1 <- function(sites, data){
          dpi = 150, annual.boxplot)
   
   monthly.boxplot <- data %>% 
+    filter(site == sites) %>% 
     group_by(metric, mon) %>%
     mutate(temp_mean = mean(temp_value)) %>% 
     ungroup() %>%
-    filter(site == sites) %>% 
     ggplot()+
     geom_boxplot(aes(y=temp_value, x=mon))+
     geom_point(aes(y=temp_mean, x=mon, color="#d73027"), show.legend = FALSE)+
@@ -187,3 +187,4 @@ run.1 <- function(sites, data){
 }
 
 xx<-purrr::map(.x=marine_sites, ~run.1(.x, df.clean))
+
