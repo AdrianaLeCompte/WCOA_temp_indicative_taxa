@@ -75,6 +75,8 @@ temp_pvt <- pivot_longer(temp_val_v2,
   as_tibble() %>% 
   subset(select = -c(1,2,6))
 
+write.csv(temp_pvt, "C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/raw data (MARINe)/spatial data/summary_temp_data_all_sites.csv", row.names = F)
+
 nans <- temp_pvt %>% 
   filter(is.na(temp_value))
 # [1] "Babencho Grande"       
