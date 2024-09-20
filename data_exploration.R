@@ -54,9 +54,9 @@ write.csv(species_swth, "R outputs/species_list_swath.csv", row.names = F)
 # importing long term data ------------------------------------------------
 species_code_key <- read_csv("raw data (MARINe)/long term monitoring/marine_lumping_codes_definitions.csv")
 
-photoplots_transects_data <- read_csv("raw data (MARINe)/long term monitoring/phototransummarysd_download.csv")
+long_term_data <- read_csv("raw data (MARINe)/long term monitoring/phototransummarysd_download.csv")
 
-phot_tran_species <- photoplots_transects_data %>% 
+phot_tran_species <- long_term_data %>% 
   filter(average_percent_cover > 0) %>% # 49 species had abundance >0
   rename(lumping_code = species_code) %>% 
   select(lumping_code) %>% distinct %>% 
@@ -67,7 +67,7 @@ sp.list <- phot_tran_species$lumping_code
 
 write.csv(phot_tran_species, "R outputs/species_list_longtermdata.csv", row.names = F)
 
-phot_tran_years <- photoplots_transects_data %>% 
+phot_tran_years <- long_term_data %>% 
   filter(average_percent_cover > 0) %>% 
   select(marine_site_name, marine_common_year) %>% 
   distinct %>% 
@@ -78,7 +78,7 @@ phot_tran_years <- photoplots_transects_data %>%
   select(-marine_common_year) %>% 
   distinct
   
-phot_tran_species_v2 <- photoplots_transects_data %>% 
+phot_tran_species_v2 <- long_term_data %>% 
   filter(average_percent_cover > 0) %>% 
   rename(lumping_code = species_code) %>% 
   select(marine_site_name, marine_common_year, lumping_code) %>% 
