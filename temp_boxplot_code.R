@@ -8,7 +8,7 @@
 # 
 # 4km pixel resolution 
 #
-# ALeCompte, August 2024
+# Adriana Le Compte, August 2024
 #######################################
 
 
@@ -92,6 +92,18 @@ nans <- temp_pvt %>%
 # [11] "Punta Rompiente"       
 # [12] "Punta San Roque"       
 # [13] "Punta Libertad"  
+
+
+
+# write dataframe for use with species data (biodiversity plotting 050724) -------------------------------
+prism_temp <- temp_pvt %>%
+  select(site, temp_value, metric, yr) %>% 
+  group_by(site, yr) %>% 
+  mutate(max_temp=max(temp_value))
+view(prism_temp)
+  
+
+
 
 # create boxplots loop ------------------------------------------------
 output_path <- "C:/Users/adrianal/SCCWRP/Ocean Health Report Cards - Temperature indicative taxa/R outputs/plots/temperature boxplots"
